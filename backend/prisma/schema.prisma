@@ -1,0 +1,767 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTH
+// ============================================
+
+enum UserRole {
+  ADMIN
+  DIRECTION
+  COMMERCIAL
+  SDR
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  passwordHash   String
+  firstName      String
+  lastName       String
+  role           UserRole
+  phone          String?
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  teamId         String?
+  team           Team?     @relation(fields: [teamId], references: [id])
+
+  // SDR relations
+  prospectsSdr       Prospect[]     @relation("SdrProspects")
+  appointmentsSdr    Appointment[]  @relation("SdrAppointments")
+
+  // Commercial relations
+  prospectsCommercial   Prospect[]     @relation("CommercialProspects")
+  appointmentsCommercial Appointment[] @relation("CommercialAppointments")
+  quotesCommercial      Quote[]        @relation("CommercialQuotes")
+  commissionsCommercial Commission[]   @relation("CommercialCommissions")
+
+  // Zone assignments
+  zoneAssignments ZoneAssignment[]
+
+  // Timeline entries
+  timelineEntries TimelineEntry[]
+
+  // Alerts assigned
+  alertsAssigned  Alert[]  @relation("AlertAssignee")
+
+  @@map("users")
+}
+
+model Team {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  members   User[]
+
+  @@map("teams")
+}
+
+// ============================================
+// PROSPECTS & CLIENTS
+// ============================================
+
+enum ProspectStatus {
+  NEW
+  QUALIFYING
+  QUALIFIED
+  APPOINTMENT_SCHEDULED
+  APPOINTMENT_DONE
+  QUOTE_SENT
+  SIGNED
+  INSTALLATION_PENDING
+  INSTALLED
+  LOST
+}
+
+enum ProspectNeed {
+  SECURITY
+  DISPLAY
+  MIXED
+}
+
+model Prospect {
+  id                  String         @id @default(uuid())
+  status              ProspectStatus @default(NEW)
+  need                ProspectNeed?
+
+  // Company info (Step 1)
+  companyName         String
+  address             String
+  addressComplement   String?
+  postalCode          String
+  city                String
+  country             String         @default("France")
+  lat                 Float?
+  lng                 Float?
+  phone               String?
+  siret               String?
+  activitySector      String?
+
+  // Decision maker
+  decisionMakerName       String
+  decisionMakerFunction   String?
+  decisionMakerMobile     String
+  decisionMakerEmail      String?
+
+  // Associate
+  hasAssociate        Boolean  @default(false)
+  associateName       String?
+  associatePhone      String?
+
+  // Qualification score
+  qualificationScore  Int?
+
+  // Tobacco subsidy
+  isTabacSubvention   Boolean  @default(false)
+  subventionAmount    Float?
+  subventionStatus    String?
+
+  // Referral
+  isReferred          Boolean  @default(false)
+  referredById        String?
+  referredBy          Prospect? @relation("Referrals", fields: [referredById], references: [id])
+  referrals           Prospect[] @relation("Referrals")
+  referralStatus      String?
+  referralRewardStatus String?
+
+  // Assigned users
+  sdrId               String?
+  sdr                 User?    @relation("SdrProspects", fields: [sdrId], references: [id])
+  commercialId        String?
+  commercial          User?    @relation("CommercialProspects", fields: [commercialId], references: [id])
+
+  // Timestamps
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  qualifiedAt         DateTime?
+  signedAt            DateTime?
+  installedAt         DateTime?
+
+  // Relations
+  qualificationAnswers QualificationAnswer[]
+  appointments         Appointment[]
+  quotes               Quote[]
+  timelineEntries      TimelineEntry[]
+  alerts               Alert[]
+  auditPhotos          AuditPhoto[]
+  auditNotes           AuditNote[]
+  documents            Document[]
+  contracts            Contract[]
+  salesPhases          SalesPhase[]
+
+  @@map("prospects")
+}
+
+// ============================================
+// QUALIFICATION QUESTIONS (Configurable)
+// ============================================
+
+enum QuestionType {
+  YES_NO
+  MULTIPLE_CHOICE
+  TEXT
+  NUMBER
+  SCALE
+}
+
+enum QuestionCategory {
+  SECURITY
+  DISPLAY
+}
+
+model QualificationQuestion {
+  id              String           @id @default(uuid())
+  text            String
+  type            QuestionType
+  category        QuestionCategory
+  parentId        String?
+  parent          QualificationQuestion?  @relation("QuestionTree", fields: [parentId], references: [id])
+  children        QualificationQuestion[] @relation("QuestionTree")
+  displayCondition String?          // JSON: { "parentAnswer": "YES" }
+  displayOrder    Int
+  required        Boolean          @default(true)
+  active          Boolean          @default(true)
+  options         String?          // JSON array for MULTIPLE_CHOICE
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  answers         QualificationAnswer[]
+
+  @@map("qualification_questions")
+}
+
+model QualificationAnswer {
+  id          String   @id @default(uuid())
+  prospectId  String
+  prospect    Prospect @relation(fields: [prospectId], references: [id])
+  questionId  String
+  question    QualificationQuestion @relation(fields: [questionId], references: [id])
+  answer      String   // Stored as JSON string
+  createdAt   DateTime @default(now())
+
+  @@unique([prospectId, questionId])
+  @@map("qualification_answers")
+}
+
+// ============================================
+// APPOINTMENTS & CALENDAR
+// ============================================
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+model Appointment {
+  id            String            @id @default(uuid())
+  prospectId    String
+  prospect      Prospect          @relation(fields: [prospectId], references: [id])
+  sdrId         String?
+  sdr           User?             @relation("SdrAppointments", fields: [sdrId], references: [id])
+  commercialId  String
+  commercial    User              @relation("CommercialAppointments", fields: [commercialId], references: [id])
+
+  scheduledAt   DateTime
+  duration      Int               @default(90) // minutes
+  status        AppointmentStatus @default(SCHEDULED)
+  notes         String?
+  cancelReason  String?
+
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@map("appointments")
+}
+
+// ============================================
+// ZONES & GEOGRAPHIC MANAGEMENT
+// ============================================
+
+model Zone {
+  id            String   @id @default(uuid())
+  name          String
+  departments   String[] // Array of department codes: ["75", "92"]
+  postalCodes   String[] // Optional specific postal codes
+  createdAt     DateTime @default(now())
+
+  assignments   ZoneAssignment[]
+
+  @@map("zones")
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model ZoneAssignment {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  zoneId      String
+  zone        Zone      @relation(fields: [zoneId], references: [id])
+  dayOfWeek   DayOfWeek
+
+  @@unique([userId, dayOfWeek])
+  @@map("zone_assignments")
+}
+
+// ============================================
+// PRODUCT CATALOG & QUOTES (CPQ)
+// ============================================
+
+enum ProductFamily {
+  SECURITY
+  MAINTENANCE
+  DISPLAY
+  WORKS
+}
+
+model Product {
+  id                String        @id @default(uuid())
+  reference         String        @unique
+  name              String
+  family            ProductFamily
+  unitPriceHT       Float
+  purchasePrice     Float?
+  unit              String        @default("piece") // piece, forfait, m2
+  laborHours        Float?
+  active            Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relations
+  kitItems          KitItem[]
+  quoteLines        QuoteLine[]
+  accessoryOf       ProductAccessory[] @relation("MainProduct")
+  accessories       ProductAccessory[] @relation("AccessoryProduct")
+
+  @@map("products")
+}
+
+model ProductAccessory {
+  id            String  @id @default(uuid())
+  productId     String
+  product       Product @relation("MainProduct", fields: [productId], references: [id])
+  accessoryId   String
+  accessory     Product @relation("AccessoryProduct", fields: [accessoryId], references: [id])
+
+  @@unique([productId, accessoryId])
+  @@map("product_accessories")
+}
+
+model Kit {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  items       KitItem[]
+
+  @@map("kits")
+}
+
+model KitItem {
+  id        String  @id @default(uuid())
+  kitId     String
+  kit       Kit     @relation(fields: [kitId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int     @default(1)
+
+  @@map("kit_items")
+}
+
+// ============================================
+// QUOTES
+// ============================================
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  SIGNED
+  VALIDATED
+  REFUSED
+  EXPIRED
+}
+
+enum PaymentMode {
+  CASH
+  LEASING
+}
+
+enum LeasingOrganism {
+  GRENKE
+  LOCAM
+  OTHER
+}
+
+model Quote {
+  id              String      @id @default(uuid())
+  quoteNumber     String      @unique
+  prospectId      String
+  prospect        Prospect    @relation(fields: [prospectId], references: [id])
+  commercialId    String
+  commercial      User        @relation("CommercialQuotes", fields: [commercialId], references: [id])
+
+  status          QuoteStatus @default(DRAFT)
+  validUntil      DateTime
+
+  // Totals
+  totalHT         Float       @default(0)
+  totalTVA        Float       @default(0)
+  totalTTC        Float       @default(0)
+  marginPercent   Float?
+
+  // Discount
+  discountPercent Float?
+  discountAmount  Float?
+
+  // Payment
+  paymentMode         PaymentMode?
+  depositPercent      Float?
+  depositAmount       Float?
+  checkNumber         String?
+  checkPhotoUrl       String?
+  leasingOrganism     LeasingOrganism?
+  leasingDuration     Int?        // months: 36, 48, 60, 63
+  monthlyPayment      Float?
+
+  // Tobacco subsidy
+  isTabacSubvention   Boolean     @default(false)
+  eligibleAmount      Float?
+
+  // Signatures
+  clientSignatureUrl      String?
+  commercialSignatureUrl  String?
+  signedAt                DateTime?
+
+  // PDF
+  pdfUrl          String?
+
+  // Phase management
+  phase           Int?         // 1 or 2
+  linkedQuoteId   String?      // Link to other phase quote
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  lines           QuoteLine[]
+  upsells         QuoteUpsell[]
+  payments        Payment[]
+  validations     Validation[]
+
+  @@map("quotes")
+}
+
+model QuoteLine {
+  id          String  @id @default(uuid())
+  quoteId     String
+  quote       Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  designation String
+  quantity    Int     @default(1)
+  unitPriceHT Float
+  totalHT     Float
+  laborHours  Float?
+  sortOrder   Int     @default(0)
+
+  @@map("quote_lines")
+}
+
+model QuoteUpsell {
+  id          String  @id @default(uuid())
+  quoteId     String
+  quote       Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  name        String  // e.g., "Contrat maintenance annuelle"
+  description String?
+  priceHT     Float
+  isMonthly   Boolean @default(false)
+  selected    Boolean @default(false)
+
+  @@map("quote_upsells")
+}
+
+// ============================================
+// PAYMENTS & VALIDATION
+// ============================================
+
+enum PaymentStatus {
+  PENDING
+  RECEIVED
+  VALIDATED
+  REJECTED
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  quoteId     String
+  quote       Quote         @relation(fields: [quoteId], references: [id])
+  amount      Float
+  type        String        // "deposit", "balance", "full"
+  mode        String        // "check", "transfer", "card"
+  status      PaymentStatus @default(PENDING)
+  reference   String?       // Check number etc.
+  receivedAt  DateTime?
+  validatedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@map("payments")
+}
+
+enum ValidationStatus {
+  PENDING
+  APPROVED
+  REFUSED
+  INFO_REQUESTED
+}
+
+model Validation {
+  id          String           @id @default(uuid())
+  quoteId     String
+  quote       Quote            @relation(fields: [quoteId], references: [id])
+  type        String           // "quote_approval", "payment_validation"
+  status      ValidationStatus @default(PENDING)
+  comment     String?
+  validatedBy String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("validations")
+}
+
+// ============================================
+// COMMISSIONS
+// ============================================
+
+enum CommissionStatus {
+  PENDING
+  PARTIAL
+  PAID
+}
+
+model Commission {
+  id              String           @id @default(uuid())
+  commercialId    String
+  commercial      User             @relation("CommercialCommissions", fields: [commercialId], references: [id])
+  quoteId         String?
+  amount          Float
+  status          CommissionStatus @default(PENDING)
+  type            String           // "sale", "referral_bonus", "performance_bonus"
+  description     String?
+  paidAmount      Float            @default(0)
+  createdAt       DateTime         @default(now())
+  paidAt          DateTime?
+
+  @@map("commissions")
+}
+
+model CommissionRule {
+  id              String        @id @default(uuid())
+  name            String
+  productFamily   ProductFamily
+  ratePercent     Float
+  // Performance tiers
+  tierMinCA       Float?
+  tierMaxCA       Float?
+  tierBonusPercent Float?
+  // Maintenance multiplier
+  maintenanceMultiplier Float?
+  // Referral bonus
+  referralBonusFixed    Float?
+  referralBonusPercent  Float?
+  active          Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+
+  @@map("commission_rules")
+}
+
+// ============================================
+// TIMELINE & NOTES
+// ============================================
+
+enum TimelineEntryType {
+  CALL
+  EMAIL
+  NOTE
+  APPOINTMENT_SCHEDULED
+  APPOINTMENT_RESCHEDULED
+  APPOINTMENT_COMPLETED
+  APPOINTMENT_CANCELLED
+  QUOTE_CREATED
+  QUOTE_SENT
+  QUOTE_SIGNED
+  STATUS_CHANGE
+  ALERT_CREATED
+  RELANCE
+  DOCUMENT_ADDED
+  REFERRAL
+}
+
+model TimelineEntry {
+  id          String            @id @default(uuid())
+  prospectId  String
+  prospect    Prospect          @relation(fields: [prospectId], references: [id])
+  userId      String
+  user        User              @relation(fields: [userId], references: [id])
+  type        TimelineEntryType
+  content     String
+  metadata    String?           // JSON for extra data
+  createdAt   DateTime          @default(now())
+
+  // Immutable - no updatedAt
+
+  @@map("timeline_entries")
+}
+
+// ============================================
+// ALERTS & RELANCES
+// ============================================
+
+enum AlertPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum AlertStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  POSTPONED
+  ESCALATED
+}
+
+model Alert {
+  id          String        @id @default(uuid())
+  prospectId  String?
+  prospect    Prospect?     @relation(fields: [prospectId], references: [id])
+  assigneeId  String?
+  assignee    User?         @relation("AlertAssignee", fields: [assigneeId], references: [id])
+  type        String        // "relance", "maintenance_expiry", "upsell", "phase2", etc.
+  title       String
+  message     String?
+  priority    AlertPriority @default(MEDIUM)
+  status      AlertStatus   @default(PENDING)
+  dueDate     DateTime
+  metadata    String?       // JSON
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  completedAt DateTime?
+
+  @@map("alerts")
+}
+
+model AlertRule {
+  id                  String   @id @default(uuid())
+  name                String
+  triggerCondition    String   // JSON: describes the condition
+  delayDays           Int
+  actionType          String   // "alert_sdr", "alert_commercial", "auto_email"
+  messageTemplate     String
+  priority            AlertPriority @default(MEDIUM)
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+
+  @@map("alert_rules")
+}
+
+// ============================================
+// AUDIT (Commercial terrain)
+// ============================================
+
+model AuditPhoto {
+  id          String   @id @default(uuid())
+  prospectId  String
+  prospect    Prospect @relation(fields: [prospectId], references: [id])
+  category    String   // "facade", "interior", "technical", "equipment"
+  url         String
+  annotations String?  // JSON: annotations data
+  lat         Float?
+  lng         Float?
+  takenAt     DateTime @default(now())
+
+  @@map("audit_photos")
+}
+
+model AuditNote {
+  id          String   @id @default(uuid())
+  prospectId  String
+  prospect    Prospect @relation(fields: [prospectId], references: [id])
+  type        String   // "text", "voice"
+  content     String   // Text content or transcription
+  audioUrl    String?  // URL to audio file for voice notes
+  createdAt   DateTime @default(now())
+
+  @@map("audit_notes")
+}
+
+// ============================================
+// DOCUMENTS
+// ============================================
+
+model Document {
+  id          String   @id @default(uuid())
+  prospectId  String
+  prospect    Prospect @relation(fields: [prospectId], references: [id])
+  type        String   // "quote_pdf", "signed_quote", "check_photo", "id_document", "subsidy_doc"
+  name        String
+  url         String
+  createdAt   DateTime @default(now())
+
+  @@map("documents")
+}
+
+// ============================================
+// CONTRACTS (Maintenance, Télésurveillance)
+// ============================================
+
+enum ContractStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PENDING
+}
+
+model Contract {
+  id          String         @id @default(uuid())
+  prospectId  String
+  prospect    Prospect       @relation(fields: [prospectId], references: [id])
+  type        String         // "maintenance", "telesurveillance", "extended_warranty"
+  status      ContractStatus @default(PENDING)
+  startDate   DateTime
+  endDate     DateTime
+  monthlyFee  Float?
+  totalAmount Float?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("contracts")
+}
+
+// ============================================
+// SALES PHASES (Vente en deux temps)
+// ============================================
+
+enum SalesPhaseStatus {
+  TO_PROPOSE
+  QUOTE_SENT
+  SIGNED
+  INSTALLED
+  PAID
+}
+
+model SalesPhase {
+  id          String           @id @default(uuid())
+  prospectId  String
+  prospect    Prospect         @relation(fields: [prospectId], references: [id])
+  phase       Int              // 1 or 2
+  status      SalesPhaseStatus @default(TO_PROPOSE)
+  quoteId     String?
+  plannedDate DateTime?
+  alertDaysBefore Int?         @default(30)
+  notes       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("sales_phases")
+}
+
+// ============================================
+// REFERRAL CONFIGURATION
+// ============================================
+
+model ReferralConfig {
+  id                    String   @id @default(uuid())
+  active                Boolean  @default(true)
+  rewardType            String   // "discount", "voucher", "free_month", "fixed_amount"
+  rewardValue           Float    // Amount or percentage
+  commercialBonusFixed  Float?
+  commercialBonusPercent Float?
+  requireFullPayment    Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("referral_config")
+}
