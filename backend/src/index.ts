@@ -14,7 +14,18 @@ import adminRoutes from './routes/admin';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+// Trust proxy for Railway/production
+app.set('trust proxy', 1);
+
+// CORS configuration
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get('/api/health', (_req, res) => {
