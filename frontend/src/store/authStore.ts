@@ -24,8 +24,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
   login: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await api.login(email, password);
-      const { token, user } = res.data;
+      const res = await api.login(email, password) as unknown as { token: string; user: User };
+      const { token, user } = res;
       api.setToken(token);
       set({ user, token, isAuthenticated: true, isLoading: false });
     } catch (err: unknown) {
@@ -42,8 +42,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   loadProfile: async () => {
     try {
-      const res = await api.getProfile();
-      set({ user: res.data });
+      const res = await api.getProfile() as unknown as { user: User };
+      set({ user: res.user });
     } catch {
       api.setToken(null);
       set({ user: null, token: null, isAuthenticated: false });
@@ -55,8 +55,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
     if (token) {
       api.setToken(token);
       try {
-        const res = await api.getProfile();
-        set({ user: res.data, token, isAuthenticated: true });
+        const res = await api.getProfile() as unknown as { user: User };
+        set({ user: res.user, token, isAuthenticated: true });
       } catch {
         api.setToken(null);
         set({ user: null, token: null, isAuthenticated: false });

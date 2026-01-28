@@ -1,6 +1,6 @@
 import type { ApiResponse } from '../types';
 
-const API_BASE = '/api/v1';
+const API_BASE = '/api';
 
 class ApiService {
   private token: string | null = null;
@@ -72,7 +72,7 @@ class ApiService {
   }
 
   getProfile() {
-    return this.request<import('../types').User>('GET', '/auth/me');
+    return this.request<{ user: import('../types').User }>('GET', '/auth/profile');
   }
 
   changePassword(currentPassword: string, newPassword: string) {
@@ -81,19 +81,19 @@ class ApiService {
 
   // Users
   getUsers(params?: Record<string, string>) {
-    return this.request<import('../types').User[]>('GET', '/users', undefined, params);
+    return this.request<{ users: import('../types').User[] }>('GET', '/auth/users', undefined, params);
   }
 
   createUser(data: Partial<import('../types').User> & { password: string }) {
-    return this.request<import('../types').User>('POST', '/users', data);
+    return this.request<{ user: import('../types').User }>('POST', '/auth/register', data);
   }
 
   updateUser(id: string, data: Partial<import('../types').User>) {
-    return this.request<import('../types').User>('PUT', `/users/${id}`, data);
+    return this.request<{ user: import('../types').User }>('PUT', `/auth/users/${id}`, data);
   }
 
   deleteUser(id: string) {
-    return this.request('DELETE', `/users/${id}`);
+    return this.request('DELETE', `/auth/users/${id}`);
   }
 
   // Prospects
