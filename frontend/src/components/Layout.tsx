@@ -4,8 +4,10 @@ import { useAuthStore } from '../store/authStore';
 import {
   LayoutDashboard, Users, Calendar, FileText, Bell, CheckSquare,
   DollarSign, BarChart3, Settings, UserCog, Package, HelpCircle,
-  Map, LogOut, Menu, X, ChevronDown, Shield, UserPlus
+  Map, LogOut, Menu, X, ChevronDown, Shield, UserPlus, CreditCard,
+  FileSignature
 } from 'lucide-react';
+import NotificationDropdown from './NotificationDropdown';
 
 const navItems = {
   SDR: [
@@ -22,6 +24,7 @@ const navItems = {
     { to: '/appointments', icon: Calendar, label: 'Mes RDV' },
     { to: '/calendar', icon: Calendar, label: 'Calendrier' },
     { to: '/quotes', icon: FileText, label: 'Devis' },
+    { to: '/contracts', icon: FileSignature, label: 'Contrats' },
     { to: '/alerts', icon: Bell, label: 'Alertes' },
     { to: '/commissions', icon: DollarSign, label: 'Mes commissions' },
   ],
@@ -30,6 +33,8 @@ const navItems = {
     { to: '/prospects', icon: Users, label: 'Prospects / Clients' },
     { to: '/quotes', icon: FileText, label: 'Devis' },
     { to: '/validations', icon: CheckSquare, label: 'Validations' },
+    { to: '/payments', icon: CreditCard, label: 'Paiements' },
+    { to: '/contracts', icon: FileSignature, label: 'Contrats' },
     { to: '/commissions', icon: DollarSign, label: 'Commissions' },
     { to: '/stats', icon: BarChart3, label: 'Statistiques' },
     { to: '/alerts', icon: Bell, label: 'Alertes' },
@@ -39,6 +44,8 @@ const navItems = {
     { to: '/prospects', icon: Users, label: 'Prospects / Clients' },
     { to: '/quotes', icon: FileText, label: 'Devis' },
     { to: '/validations', icon: CheckSquare, label: 'Validations' },
+    { to: '/payments', icon: CreditCard, label: 'Paiements' },
+    { to: '/contracts', icon: FileSignature, label: 'Contrats' },
     { to: '/commissions', icon: DollarSign, label: 'Commissions' },
     { to: '/stats', icon: BarChart3, label: 'Statistiques' },
     { to: '/alerts', icon: Bell, label: 'Alertes' },
@@ -120,7 +127,11 @@ export default function Layout() {
 
           <div className="flex-1" />
 
-          <div className="relative">
+          <div className="flex items-center gap-4">
+            <NotificationDropdown />
+          </div>
+
+          <div className="relative ml-4">
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900"

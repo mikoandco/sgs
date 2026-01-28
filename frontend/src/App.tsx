@@ -4,6 +4,7 @@ import { useAuthStore } from './store/authStore';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import Dashboard from './pages/Dashboard';
 import ProspectListPage from './pages/prospects/ProspectListPage';
 import ProspectDetailPage from './pages/prospects/ProspectDetailPage';
 import ProspectWizardPage from './pages/prospects/ProspectWizardPage';
@@ -21,6 +22,10 @@ import ProductListPage from './pages/admin/ProductListPage';
 import QuestionConfigPage from './pages/admin/QuestionConfigPage';
 import ZoneConfigPage from './pages/admin/ZoneConfigPage';
 import CommissionConfigPage from './pages/admin/CommissionConfigPage';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import Payments from './pages/Payments';
+import Contracts from './pages/Contracts';
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { isAuthenticated, user } = useAuthStore();
@@ -49,8 +54,10 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route index element={<DashboardPage />} />
+          <Route index element={<Dashboard />} />
 
           {/* Prospects */}
           <Route path="prospects" element={<ProspectListPage />} />
@@ -74,6 +81,8 @@ export default function App() {
           <Route path="validations" element={<ProtectedRoute roles={['DIRECTION', 'ADMIN']}><ValidationListPage /></ProtectedRoute>} />
           <Route path="commissions" element={<ProtectedRoute roles={['DIRECTION', 'ADMIN', 'COMMERCIAL']}><CommissionListPage /></ProtectedRoute>} />
           <Route path="stats" element={<ProtectedRoute roles={['DIRECTION', 'ADMIN']}><StatsPage /></ProtectedRoute>} />
+          <Route path="payments" element={<ProtectedRoute roles={['DIRECTION', 'ADMIN']}><Payments /></ProtectedRoute>} />
+          <Route path="contracts" element={<ProtectedRoute roles={['DIRECTION', 'ADMIN', 'COMMERCIAL']}><Contracts /></ProtectedRoute>} />
 
           {/* Admin */}
           <Route path="admin/users" element={<ProtectedRoute roles={['ADMIN']}><UserListPage /></ProtectedRoute>} />

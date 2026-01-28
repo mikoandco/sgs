@@ -311,6 +311,217 @@ class ApiService {
   updateReferralConfig(data: Record<string, unknown>) {
     return this.request('PUT', '/admin/referral-config', data);
   }
+
+  // Password reset
+  forgotPassword(email: string) {
+    return this.request('POST', '/auth/forgot-password', { email });
+  }
+
+  resetPassword(token: string, password: string) {
+    return this.request('POST', '/auth/reset-password', { token, password });
+  }
+
+  updateProfile(data: { firstName?: string; lastName?: string; phone?: string }) {
+    return this.request('PUT', '/auth/profile', data);
+  }
+
+  // Payments
+  getPayments(params?: Record<string, string>) {
+    return this.request('GET', '/payments', undefined, params);
+  }
+
+  getPendingPayments() {
+    return this.request('GET', '/payments/pending');
+  }
+
+  getPaymentStats() {
+    return this.request('GET', '/payments/stats');
+  }
+
+  createPayment(data: { quoteId: string; amount: number; type: string; mode: string; reference?: string }) {
+    return this.request('POST', '/payments', data);
+  }
+
+  updatePayment(id: string, data: { status?: string; reference?: string; receivedAt?: string }) {
+    return this.request('PUT', `/payments/${id}`, data);
+  }
+
+  validatePayment(id: string, data: { approved: boolean; comment?: string }) {
+    return this.request('POST', `/payments/${id}/validate`, data);
+  }
+
+  // Contracts
+  getContracts(params?: Record<string, string>) {
+    return this.request('GET', '/contracts', undefined, params);
+  }
+
+  getExpiringContracts(days?: number) {
+    return this.request('GET', '/contracts/expiring', undefined, days ? { days: days.toString() } : undefined);
+  }
+
+  getContractStats() {
+    return this.request('GET', '/contracts/stats');
+  }
+
+  getContract(id: string) {
+    return this.request('GET', `/contracts/${id}`);
+  }
+
+  createContract(data: { prospectId: string; type: string; startDate: string; endDate: string; monthlyFee?: number; totalAmount?: number }) {
+    return this.request('POST', '/contracts', data);
+  }
+
+  updateContract(id: string, data: { status?: string; startDate?: string; endDate?: string; monthlyFee?: number }) {
+    return this.request('PUT', `/contracts/${id}`, data);
+  }
+
+  renewContract(id: string, data: { newEndDate: string; newMonthlyFee?: number }) {
+    return this.request('POST', `/contracts/${id}/renew`, data);
+  }
+
+  // Uploads
+  async uploadFile(file: File, options?: { prospectId?: string; type?: string; category?: string }) {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (options?.prospectId) formData.append('prospectId', options.prospectId);
+    if (options?.type) formData.append('type', options.type);
+
+    const token = this.getToken();
+    const url = new URL(`${API_BASE}/uploads`, window.location.origin);
+    if (options?.category) url.searchParams.set('category', options.category);
+
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+
+    return response.json();
+  }
+
+  async uploadSignature(signature: string, prospectId?: string, type?: string) {
+    return this.request('POST', '/uploads/signature', { signature, prospectId, type });
+  }
+
+  async uploadAuditPhoto(file: File, prospectId: string, category: string, lat?: number, lng?: number) {
+    const formData = new FormData();
+    formData.append('photo', file);
+    formData.append('prospectId', prospectId);
+    formData.append('category', category);
+    if (lat) formData.append('lat', lat.toString());
+    if (lng) formData.append('lng', lng.toString());
+
+    const token = this.getToken();
+    const response = await fetch(`${API_BASE}/uploads/audit-photo`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+
+    return response.json();
+  }
+
+  getProspectDocuments(prospectId: string) {
+    return this.request('GET', `/uploads/prospect/${prospectId}`);
+  }
+
+  deleteDocument(id: string) {
+    return this.request('DELETE', `/uploads/${id}`);
+  }
+
+  // Exports
+  exportProspects(params?: Record<string, string>) {
+    const token = this.getToken();
+    const url = new URL(`${API_BASE}/exports/prospects`, window.location.origin);
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) url.searchParams.set(key, value);
+      });
+    }
+    window.open(url.toString() + (token ? `&token=${token}` : ''), '_blank');
+  }
+
+  exportQuotes(params?: Record<string, string>) {
+    const token = this.getToken();
+    const url = new URL(`${API_BASE}/exports/quotes`, window.location.origin);
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) url.searchParams.set(key, value);
+      });
+    }
+    window.open(url.toString() + (token ? `&token=${token}` : ''), '_blank');
+  }
+
+  exportCommissions(params?: Record<string, string>) {
+    const token = this.getToken();
+    const url = new URL(`${API_BASE}/exports/commissions`, window.location.origin);
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) url.searchParams.set(key, value);
+      });
+    }
+    window.open(url.toString() + (token ? `&token=${token}` : ''), '_blank');
+  }
+
+  async downloadQuotePdf(quoteId: string) {
+    const token = this.getToken();
+    const response = await fetch(`${API_BASE}/exports/quote/${quoteId}/pdf`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `devis_${quoteId}.pdf`;
+    a.click();
+  }
+
+  async downloadStatsReport(period: 'week' | 'month' | 'quarter' | 'year' = 'month') {
+    const token = this.getToken();
+    const response = await fetch(`${API_BASE}/exports/stats/report?period=${period}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rapport_${period}_${new Date().toISOString().split('T')[0]}.pdf`;
+    a.click();
+  }
+
+  // Notifications
+  getNotifications(params?: { unreadOnly?: boolean; limit?: number }) {
+    return this.request('GET', '/notifications', undefined, params as Record<string, string>);
+  }
+
+  getUnreadCount() {
+    return this.request<{ count: number }>('GET', '/notifications/unread-count');
+  }
+
+  markNotificationAsRead(id: string) {
+    return this.request('PUT', `/notifications/${id}/read`);
+  }
+
+  markAllNotificationsAsRead() {
+    return this.request('PUT', '/notifications/read-all');
+  }
+
+  deleteNotification(id: string) {
+    return this.request('DELETE', `/notifications/${id}`);
+  }
+
+  // Validations
+  getValidations(params?: Record<string, string>) {
+    return this.request('GET', '/validations', undefined, params);
+  }
+
+  getPendingValidations() {
+    return this.request('GET', '/validations/pending');
+  }
+
+  processValidation(id: string, data: { status: 'APPROVED' | 'REFUSED' | 'INFO_REQUESTED'; comment?: string }) {
+    return this.request('PUT', `/validations/${id}`, data);
+  }
 }
 
 export const api = new ApiService();
