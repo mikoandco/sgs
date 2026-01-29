@@ -1,8 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
-import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { PrismaClient } from '@prisma/client';
+import { authenticate } from '../middleware/auth';
+import { AuthRequest } from '../types';
 import googleCalendar from '../services/googleCalendar';
 
+const prisma = new PrismaClient();
 const router = Router();
 
 // ============================================
@@ -10,9 +12,9 @@ const router = Router();
 // ============================================
 
 // Initiate Google OAuth flow
-router.get('/google/connect', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/google/connect', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.userId!;
 
     // Check if already connected
     const existing = await prisma.calendarIntegration.findUnique({
@@ -97,9 +99,9 @@ router.get('/google/callback', async (req: Request, res: Response) => {
 });
 
 // Disconnect Google Calendar
-router.post('/google/disconnect', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/google/disconnect', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.userId!;
 
     await googleCalendar.disconnectGoogle(userId);
 
@@ -122,9 +124,9 @@ router.post('/google/disconnect', authMiddleware, async (req: AuthRequest, res: 
 });
 
 // Get integration status
-router.get('/google/status', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/google/status', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.userId!;
 
     const integration = await prisma.calendarIntegration.findUnique({
       where: { userId },
@@ -153,9 +155,9 @@ router.get('/google/status', authMiddleware, async (req: AuthRequest, res: Respo
 });
 
 // Manual sync trigger
-router.post('/google/sync', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/google/sync', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.userId!;
 
     const integration = await prisma.calendarIntegration.findUnique({
       where: { userId },
@@ -179,9 +181,9 @@ router.post('/google/sync', authMiddleware, async (req: AuthRequest, res: Respon
 });
 
 // Toggle sync enabled
-router.put('/google/settings', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.put('/google/settings', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.userId!;
     const { syncEnabled } = req.body;
 
     const integration = await prisma.calendarIntegration.update({

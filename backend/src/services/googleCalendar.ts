@@ -1,5 +1,7 @@
 import { google, calendar_v3 } from 'googleapis';
-import { prisma } from '../lib/prisma';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 // Google OAuth2 Configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
@@ -402,6 +404,7 @@ export const disconnectGoogle = async (userId: string): Promise<void> => {
 };
 
 export default {
+  createOAuth2Client,
   getAuthUrl,
   getTokensFromCode,
   createGoogleEvent,

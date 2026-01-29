@@ -1,11 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
-import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { PrismaClient } from '@prisma/client';
+import { authenticate } from '../middleware/auth';
+import { AuthRequest } from '../types';
 
+const prisma = new PrismaClient();
 const router = Router();
 
 // Get comments for a prospect
-router.get('/prospect/:prospectId', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/prospect/:prospectId', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { prospectId } = req.params;
 
@@ -27,10 +29,10 @@ router.get('/prospect/:prospectId', authMiddleware, async (req: AuthRequest, res
 });
 
 // Add a comment
-router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { prospectId, content, mentions } = req.body;
-    const userId = req.user!.id;
+    const userId = req.userId!;
 
     const comment = await prisma.comment.create({
       data: {
@@ -73,18 +75,18 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 });
 
 // Update a comment
-router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.put('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { content } = req.body;
-    const userId = req.user!.id;
+    const userId = req.userId!;
 
     // Check if user is the author
     const existing = await prisma.comment.findUnique({ where: { id } });
     if (!existing) {
       return res.status(404).json({ error: 'Comment not found' });
     }
-    if (existing.authorId !== userId && req.user!.role !== 'ADMIN') {
+    if (existing.authorId !== userId && req.userRole! !== 'ADMIN') {
       return res.status(403).json({ error: 'Not authorized to edit this comment' });
     }
 
@@ -106,16 +108,16 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 });
 
 // Delete a comment
-router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.user!.id;
+    const userId = req.userId!;
 
     const existing = await prisma.comment.findUnique({ where: { id } });
     if (!existing) {
       return res.status(404).json({ error: 'Comment not found' });
     }
-    if (existing.authorId !== userId && req.user!.role !== 'ADMIN') {
+    if (existing.authorId !== userId && req.userRole! !== 'ADMIN') {
       return res.status(403).json({ error: 'Not authorized to delete this comment' });
     }
 
@@ -129,7 +131,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
 });
 
 // Get recent comments across all prospects (for activity feed)
-router.get('/recent', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/recent', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 20;
 

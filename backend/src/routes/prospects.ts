@@ -174,7 +174,7 @@ router.post(
       } = req.body;
 
       // Auto-set sdrId to current user if they are an SDR
-      const effectiveSdrId = req.user!.role === 'SDR' ? req.user!.id : sdrId;
+      const effectiveSdrId = req.userRole! === 'SDR' ? req.userId! : sdrId;
 
       const prospect = await prisma.$transaction(async (tx) => {
         const newProspect = await tx.prospect.create({
@@ -216,7 +216,7 @@ router.post(
         await tx.timelineEntry.create({
           data: {
             prospectId: newProspect.id,
-            userId: req.user!.id,
+            userId: req.userId!,
             type: 'STATUS_CHANGE',
             content: 'Prospect créé',
           },
@@ -333,7 +333,7 @@ router.put(
           await tx.timelineEntry.create({
             data: {
               prospectId: id,
-              userId: req.user!.id,
+              userId: req.userId!,
               type: 'STATUS_CHANGE',
               content: `Statut changé en ${status}`,
             },
@@ -406,7 +406,7 @@ router.post(
         await tx.timelineEntry.create({
           data: {
             prospectId: id,
-            userId: req.user!.id,
+            userId: req.userId!,
             type: 'STATUS_CHANGE',
             content: 'Prospect qualifié',
             metadata: JSON.stringify({ answersCount: answers.length }),
@@ -448,7 +448,7 @@ router.post(
       const entry = await prisma.timelineEntry.create({
         data: {
           prospectId: id,
-          userId: req.user!.id,
+          userId: req.userId!,
           type,
           content,
           metadata: metadata ? JSON.stringify(metadata) : undefined,
