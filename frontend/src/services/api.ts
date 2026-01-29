@@ -543,6 +543,32 @@ class ApiService {
   deleteComment(id: string) {
     return this.request('DELETE', `/comments/${id}`);
   }
+
+  // Google Calendar Integration
+  getGoogleCalendarStatus() {
+    return this.request<{
+      connected: boolean;
+      email?: string;
+      syncEnabled?: boolean;
+      lastSyncAt?: string;
+    }>('GET', '/calendar/google/status');
+  }
+
+  getGoogleConnectUrl() {
+    return this.request<{ url: string }>('GET', '/calendar/google/connect');
+  }
+
+  disconnectGoogleCalendar() {
+    return this.request('POST', '/calendar/google/disconnect');
+  }
+
+  syncGoogleCalendar() {
+    return this.request<{ success: boolean; syncedEvents?: number }>('POST', '/calendar/google/sync');
+  }
+
+  toggleGoogleSync(enabled: boolean) {
+    return this.request('PUT', '/calendar/google/settings', { syncEnabled: enabled });
+  }
 }
 
 export const api = new ApiService();

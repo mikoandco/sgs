@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import CalendarSync from '../components/CalendarSync';
+import GoogleCalendarSync from '../components/GoogleCalendarSync';
 
 interface NotificationSettings {
   emailNewProspect: boolean;
@@ -356,7 +357,13 @@ export const SettingsPage: React.FC = () => {
 
           {/* Calendar Tab */}
           {activeTab === 'calendar' && (
-            <CalendarSync userId={user?.id} />
+            <div className="space-y-6">
+              {/* Google Calendar Bidirectional Sync */}
+              <GoogleCalendarSync />
+
+              {/* iCal Subscription (one-way) */}
+              <CalendarSync userId={user?.id} />
+            </div>
           )}
 
           {/* Security Tab */}

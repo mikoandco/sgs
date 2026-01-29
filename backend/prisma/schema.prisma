@@ -56,6 +56,9 @@ model User {
   // Comments authored
   comments        Comment[]
 
+  // Calendar integration
+  calendarIntegration CalendarIntegration?
+
   @@map("users")
 }
 
@@ -244,6 +247,9 @@ model Appointment {
   status        AppointmentStatus @default(SCHEDULED)
   notes         String?
   cancelReason  String?
+
+  // Google Calendar sync
+  googleEventId String?
 
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
@@ -788,4 +794,40 @@ model ReferralConfig {
   updatedAt             DateTime @updatedAt
 
   @@map("referral_config")
+}
+
+// ============================================
+// CALENDAR INTEGRATIONS
+// ============================================
+
+model CalendarIntegration {
+  id                  String    @id @default(uuid())
+  userId              String    @unique
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider            String    @default("google") // "google", "outlook", "apple"
+
+  // OAuth tokens
+  accessToken         String
+  refreshToken        String?
+  expiresAt           DateTime?
+
+  // Google-specific
+  googleEmail         String?
+  googleCalendarId    String?   @default("primary")
+
+  // Webhook configuration
+  webhookChannelId    String?
+  webhookResourceId   String?
+  webhookExpiration   DateTime?
+
+  // Sync state
+  lastSyncToken       String?
+  lastSyncAt          DateTime?
+  syncEnabled         Boolean   @default(true)
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("calendar_integrations")
 }
