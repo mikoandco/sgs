@@ -32,6 +32,7 @@ import Analytics from './pages/Analytics';
 import Reports from './pages/Reports';
 import EmailTemplates from './pages/admin/EmailTemplates';
 import WorkflowRules from './pages/admin/WorkflowRules';
+import SettingsPage from './pages/SettingsPage';
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { isAuthenticated, user } = useAuthStore();
@@ -92,6 +93,7 @@ export default function App() {
 
           {/* Profile & Gamification */}
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="gamification" element={<Gamification />} />
 
           {/* Analytics & Reports */}

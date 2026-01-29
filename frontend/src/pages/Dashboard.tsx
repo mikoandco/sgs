@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Users,
   Calendar,
@@ -12,10 +13,13 @@ import {
   CheckCircle,
   XCircle,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Plus,
+  ChevronRight
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../services/api';
+import ActivityFeed from '../components/ActivityFeed';
 
 interface DashboardStats {
   teleprospection?: {
@@ -389,7 +393,7 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Pipeline */}
+      {/* Pipeline and Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Pipeline des devis</h2>
@@ -435,6 +439,58 @@ export const Dashboard: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Activity Feed and Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <ActivityFeed limit={8} />
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions rapides</h2>
+          <div className="space-y-3">
+            <Link
+              to="/prospects/new"
+              className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Plus className="w-5 h-5 text-blue-600" />
+                <span className="font-medium text-blue-700">Nouveau prospect</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-blue-600" />
+            </Link>
+            <Link
+              to="/quotes"
+              className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-green-600" />
+                <span className="font-medium text-green-700">Voir les devis</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-green-600" />
+            </Link>
+            <Link
+              to="/validations"
+              className="flex items-center justify-between p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-orange-600" />
+                <span className="font-medium text-orange-700">Validations en attente</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-orange-600" />
+            </Link>
+            <Link
+              to="/analytics"
+              className="flex items-center justify-between p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <TrendingUp className="w-5 h-5 text-purple-600" />
+                <span className="font-medium text-purple-700">Analytiques</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-purple-600" />
+            </Link>
+          </div>
         </div>
       </div>
     </div>
