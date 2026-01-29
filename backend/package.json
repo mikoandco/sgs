@@ -3,12 +3,16 @@
   "version": "1.0.0",
   "description": "CRM Commercial Solution GS - Backend API",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn src/index.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node dist/index.js",
+    "postinstall": "prisma generate",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate": "prisma migrate deploy",
     "db:seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
@@ -18,6 +22,7 @@
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "express-validator": "^7.2.0",
+    "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^7.0.13",
