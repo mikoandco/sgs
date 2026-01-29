@@ -26,6 +26,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Payments from './pages/Payments';
 import Contracts from './pages/Contracts';
+import ProfilePage from './pages/ProfilePage';
+import Gamification from './pages/Gamification';
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { isAuthenticated, user } = useAuthStore();
@@ -83,6 +85,10 @@ export default function App() {
           <Route path="stats" element={<ProtectedRoute roles={['DIRECTION', 'ADMIN']}><StatsPage /></ProtectedRoute>} />
           <Route path="payments" element={<ProtectedRoute roles={['DIRECTION', 'ADMIN']}><Payments /></ProtectedRoute>} />
           <Route path="contracts" element={<ProtectedRoute roles={['DIRECTION', 'ADMIN', 'COMMERCIAL']}><Contracts /></ProtectedRoute>} />
+
+          {/* Profile */}
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="gamification" element={<Gamification />} />
 
           {/* Admin */}
           <Route path="admin/users" element={<ProtectedRoute roles={['ADMIN']}><UserListPage /></ProtectedRoute>} />

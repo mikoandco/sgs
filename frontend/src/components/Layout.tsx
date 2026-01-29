@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Calendar, FileText, Bell, CheckSquare,
   DollarSign, BarChart3, Settings, UserCog, Package, HelpCircle,
   Map, LogOut, Menu, X, ChevronDown, Shield, UserPlus, CreditCard,
-  FileSignature
+  FileSignature, Trophy, User
 } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
 
@@ -17,6 +17,7 @@ const navItems = {
     { to: '/appointments', icon: Calendar, label: 'Rendez-vous' },
     { to: '/calendar', icon: Calendar, label: 'Calendrier' },
     { to: '/alerts', icon: Bell, label: 'Alertes' },
+    { to: '/gamification', icon: Trophy, label: 'Classement' },
   ],
   COMMERCIAL: [
     { to: '/', icon: LayoutDashboard, label: 'Tableau de bord' },
@@ -27,6 +28,7 @@ const navItems = {
     { to: '/contracts', icon: FileSignature, label: 'Contrats' },
     { to: '/alerts', icon: Bell, label: 'Alertes' },
     { to: '/commissions', icon: DollarSign, label: 'Mes commissions' },
+    { to: '/gamification', icon: Trophy, label: 'Classement' },
   ],
   DIRECTION: [
     { to: '/', icon: LayoutDashboard, label: 'Tableau de bord' },
@@ -37,6 +39,7 @@ const navItems = {
     { to: '/contracts', icon: FileSignature, label: 'Contrats' },
     { to: '/commissions', icon: DollarSign, label: 'Commissions' },
     { to: '/stats', icon: BarChart3, label: 'Statistiques' },
+    { to: '/gamification', icon: Trophy, label: 'Classement' },
     { to: '/alerts', icon: Bell, label: 'Alertes' },
   ],
   ADMIN: [
@@ -48,6 +51,7 @@ const navItems = {
     { to: '/contracts', icon: FileSignature, label: 'Contrats' },
     { to: '/commissions', icon: DollarSign, label: 'Commissions' },
     { to: '/stats', icon: BarChart3, label: 'Statistiques' },
+    { to: '/gamification', icon: Trophy, label: 'Classement' },
     { to: '/alerts', icon: Bell, label: 'Alertes' },
     { to: '/admin/users', icon: UserCog, label: 'Utilisateurs' },
     { to: '/admin/products', icon: Package, label: 'Catalogue' },
@@ -148,6 +152,15 @@ export default function Layout() {
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-20 py-1">
+                  <NavLink
+                    to="/profile"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <User className="h-4 w-4" />
+                    Mon profil
+                  </NavLink>
+                  <hr className="my-1 border-gray-200" />
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
