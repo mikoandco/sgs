@@ -30,6 +30,8 @@ import ProfilePage from './pages/ProfilePage';
 import Gamification from './pages/Gamification';
 import Analytics from './pages/Analytics';
 import Reports from './pages/Reports';
+import EmailTemplates from './pages/admin/EmailTemplates';
+import WorkflowRules from './pages/admin/WorkflowRules';
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { isAuthenticated, user } = useAuthStore();
@@ -102,6 +104,8 @@ export default function App() {
           <Route path="admin/questions" element={<ProtectedRoute roles={['ADMIN']}><QuestionConfigPage /></ProtectedRoute>} />
           <Route path="admin/zones" element={<ProtectedRoute roles={['ADMIN']}><ZoneConfigPage /></ProtectedRoute>} />
           <Route path="admin/commissions" element={<ProtectedRoute roles={['ADMIN']}><CommissionConfigPage /></ProtectedRoute>} />
+          <Route path="admin/emails" element={<ProtectedRoute roles={['ADMIN']}><EmailTemplates /></ProtectedRoute>} />
+          <Route path="admin/workflows" element={<ProtectedRoute roles={['ADMIN']}><WorkflowRules /></ProtectedRoute>} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Calendar, FileText, Bell, CheckSquare,
   DollarSign, BarChart3, Settings, UserCog, Package, HelpCircle,
   Map, LogOut, Menu, X, ChevronDown, Shield, UserPlus, CreditCard,
-  FileSignature, Trophy, User, TrendingUp, Download
+  FileSignature, Trophy, User, TrendingUp, Download, Mail, Zap
 } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
 
@@ -62,6 +62,8 @@ const navItems = {
     { to: '/admin/questions', icon: HelpCircle, label: 'Questions' },
     { to: '/admin/zones', icon: Map, label: 'Zones' },
     { to: '/admin/commissions', icon: Settings, label: 'Config Commissions' },
+    { to: '/admin/emails', icon: Mail, label: 'Modèles Emails' },
+    { to: '/admin/workflows', icon: Zap, label: 'Automatisations' },
   ],
 };
 

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Phone, Mail, MapPin, Calendar, FileText, Bell, Users, Shield, Monitor, Building2, Send } from 'lucide-react';
 import api from '../../services/api';
 import type { Prospect, TimelineEntry } from '../../types';
+import CommentSection from '../../components/CommentSection';
 
 const STATUS_LABELS: Record<string, string> = {
   NEW: 'Nouveau', QUALIFYING: 'En qualification', QUALIFIED: 'Qualifié',
@@ -193,6 +194,9 @@ export default function ProspectDetailPage() {
               </button>
             </form>
           </div>
+
+          {/* Internal Comments Section */}
+          <CommentSection prospectId={id!} />
         </div>
 
         <div className="space-y-6">
