@@ -53,6 +53,9 @@ model User {
   // Alerts assigned
   alertsAssigned  Alert[]  @relation("AlertAssignee")
 
+  // Comments authored
+  comments        Comment[]
+
   @@map("users")
 }
 
@@ -157,6 +160,7 @@ model Prospect {
   documents            Document[]
   contracts            Contract[]
   salesPhases          SalesPhase[]
+  comments             Comment[]
 
   @@map("prospects")
 }
@@ -565,6 +569,7 @@ enum TimelineEntryType {
   CALL
   EMAIL
   NOTE
+  COMMENT
   APPOINTMENT_SCHEDULED
   APPOINTMENT_RESCHEDULED
   APPOINTMENT_COMPLETED
@@ -587,12 +592,31 @@ model TimelineEntry {
   user        User              @relation(fields: [userId], references: [id])
   type        TimelineEntryType
   content     String
+  description String?
   metadata    String?           // JSON for extra data
   createdAt   DateTime          @default(now())
 
   // Immutable - no updatedAt
 
   @@map("timeline_entries")
+}
+
+// ============================================
+// COMMENTS (Internal Collaboration)
+// ============================================
+
+model Comment {
+  id          String    @id @default(uuid())
+  prospectId  String
+  prospect    Prospect  @relation(fields: [prospectId], references: [id])
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id])
+  content     String
+  mentions    String[]  // Array of user IDs mentioned
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("comments")
 }
 
 // ============================================

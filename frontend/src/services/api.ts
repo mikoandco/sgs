@@ -522,6 +522,27 @@ class ApiService {
   processValidation(id: string, data: { status: 'APPROVED' | 'REFUSED' | 'INFO_REQUESTED'; comment?: string }) {
     return this.request('PUT', `/validations/${id}`, data);
   }
+
+  // Comments
+  getComments(prospectId: string) {
+    return this.request('GET', `/comments/prospect/${prospectId}`);
+  }
+
+  getRecentComments(limit?: number) {
+    return this.request('GET', '/comments/recent', undefined, limit ? { limit: limit.toString() } : undefined);
+  }
+
+  createComment(prospectId: string, content: string, mentions?: string[]) {
+    return this.request<any>('POST', '/comments', { prospectId, content, mentions });
+  }
+
+  updateComment(id: string, content: string) {
+    return this.request<any>('PUT', `/comments/${id}`, { content });
+  }
+
+  deleteComment(id: string) {
+    return this.request('DELETE', `/comments/${id}`);
+  }
 }
 
 export const api = new ApiService();

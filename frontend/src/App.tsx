@@ -28,6 +28,8 @@ import Payments from './pages/Payments';
 import Contracts from './pages/Contracts';
 import ProfilePage from './pages/ProfilePage';
 import Gamification from './pages/Gamification';
+import Analytics from './pages/Analytics';
+import Reports from './pages/Reports';
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { isAuthenticated, user } = useAuthStore();
@@ -86,9 +88,13 @@ export default function App() {
           <Route path="payments" element={<ProtectedRoute roles={['DIRECTION', 'ADMIN']}><Payments /></ProtectedRoute>} />
           <Route path="contracts" element={<ProtectedRoute roles={['DIRECTION', 'ADMIN', 'COMMERCIAL']}><Contracts /></ProtectedRoute>} />
 
-          {/* Profile */}
+          {/* Profile & Gamification */}
           <Route path="profile" element={<ProfilePage />} />
           <Route path="gamification" element={<Gamification />} />
+
+          {/* Analytics & Reports */}
+          <Route path="analytics" element={<ProtectedRoute roles={['DIRECTION', 'ADMIN']}><Analytics /></ProtectedRoute>} />
+          <Route path="reports" element={<ProtectedRoute roles={['DIRECTION', 'ADMIN']}><Reports /></ProtectedRoute>} />
 
           {/* Admin */}
           <Route path="admin/users" element={<ProtectedRoute roles={['ADMIN']}><UserListPage /></ProtectedRoute>} />

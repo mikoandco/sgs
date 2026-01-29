@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Calendar, FileText, Bell, CheckSquare,
   DollarSign, BarChart3, Settings, UserCog, Package, HelpCircle,
   Map, LogOut, Menu, X, ChevronDown, Shield, UserPlus, CreditCard,
-  FileSignature, Trophy, User
+  FileSignature, Trophy, User, TrendingUp, Download
 } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
 
@@ -39,6 +39,8 @@ const navItems = {
     { to: '/contracts', icon: FileSignature, label: 'Contrats' },
     { to: '/commissions', icon: DollarSign, label: 'Commissions' },
     { to: '/stats', icon: BarChart3, label: 'Statistiques' },
+    { to: '/analytics', icon: TrendingUp, label: 'Analytiques' },
+    { to: '/reports', icon: Download, label: 'Rapports' },
     { to: '/gamification', icon: Trophy, label: 'Classement' },
     { to: '/alerts', icon: Bell, label: 'Alertes' },
   ],
@@ -51,6 +53,8 @@ const navItems = {
     { to: '/contracts', icon: FileSignature, label: 'Contrats' },
     { to: '/commissions', icon: DollarSign, label: 'Commissions' },
     { to: '/stats', icon: BarChart3, label: 'Statistiques' },
+    { to: '/analytics', icon: TrendingUp, label: 'Analytiques' },
+    { to: '/reports', icon: Download, label: 'Rapports' },
     { to: '/gamification', icon: Trophy, label: 'Classement' },
     { to: '/alerts', icon: Bell, label: 'Alertes' },
     { to: '/admin/users', icon: UserCog, label: 'Utilisateurs' },
