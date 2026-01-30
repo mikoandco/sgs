@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticate, authorize } from '../middleware/auth';
 import { AuthRequest } from '../types';
+import geocoding from '../services/geocoding';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -492,6 +493,176 @@ router.get(
       res.json({ data: entries });
     } catch (error) {
       console.error('Error retrieving timeline:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+// ---------------------------------------------------------------------------
+// POST /:id/geocode - Geocode a prospect's address
+// ---------------------------------------------------------------------------
+router.post(
+  '/:id/geocode',
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      const prospect = await prisma.prospect.findUnique({ where: { id } });
+      if (!prospect) {
+        res.status(404).json({ error: 'Prospect not found' });
+        return;
+      }
+
+      const result = await geocoding.geocodeAddress(
+        prospect.address,
+        prospect.postalCode,
+        prospect.city
+      );
+
+      if (!result.success) {
+        res.status(400).json({ error: result.error || 'Geocoding failed' });
+        return;
+      }
+
+      // Update prospect with coordinates
+      const updated = await prisma.prospect.update({
+        where: { id },
+        data: {
+          lat: result.lat,
+          lng: result.lng,
+        },
+      });
+
+      res.json({
+        data: {
+          lat: updated.lat,
+          lng: updated.lng,
+          formattedAddress: result.formattedAddress,
+          confidence: result.confidence,
+        },
+      });
+    } catch (error) {
+      console.error('Error geocoding prospect:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+// ---------------------------------------------------------------------------
+// POST /geocode-batch - Batch geocode multiple prospects
+// ---------------------------------------------------------------------------
+router.post(
+  '/geocode-batch',
+  authorize('ADMIN', 'DIRECTION'),
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { prospectIds } = req.body;
+
+      if (!prospectIds || !Array.isArray(prospectIds)) {
+        res.status(400).json({ error: 'prospectIds array required' });
+        return;
+      }
+
+      const prospects = await prisma.prospect.findMany({
+        where: {
+          id: { in: prospectIds },
+          lat: null, // Only geocode those without coordinates
+        },
+        select: {
+          id: true,
+          address: true,
+          postalCode: true,
+          city: true,
+        },
+      });
+
+      const results = {
+        total: prospects.length,
+        success: 0,
+        failed: 0,
+        errors: [] as string[],
+      };
+
+      for (const prospect of prospects) {
+        const result = await geocoding.geocodeAddress(
+          prospect.address,
+          prospect.postalCode,
+          prospect.city
+        );
+
+        if (result.success && result.lat && result.lng) {
+          await prisma.prospect.update({
+            where: { id: prospect.id },
+            data: {
+              lat: result.lat,
+              lng: result.lng,
+            },
+          });
+          results.success++;
+        } else {
+          results.failed++;
+          results.errors.push(`${prospect.id}: ${result.error}`);
+        }
+
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      res.json(results);
+    } catch (error) {
+      console.error('Error batch geocoding:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+// ---------------------------------------------------------------------------
+// GET /nearby - Find prospects near a location
+// ---------------------------------------------------------------------------
+router.get(
+  '/nearby',
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { lat, lng, radius = '50' } = req.query;
+
+      if (!lat || !lng) {
+        res.status(400).json({ error: 'lat and lng required' });
+        return;
+      }
+
+      const centerLat = parseFloat(lat as string);
+      const centerLng = parseFloat(lng as string);
+      const radiusKm = parseFloat(radius as string);
+
+      // Get all prospects with coordinates
+      const prospects = await prisma.prospect.findMany({
+        where: {
+          lat: { not: null },
+          lng: { not: null },
+        },
+        include: {
+          sdr: { select: { id: true, firstName: true, lastName: true } },
+          commercial: { select: { id: true, firstName: true, lastName: true } },
+        },
+      });
+
+      // Filter by distance
+      const nearbyProspects = prospects
+        .map(prospect => ({
+          ...prospect,
+          distance: geocoding.calculateDistance(
+            centerLat,
+            centerLng,
+            prospect.lat!,
+            prospect.lng!
+          ),
+        }))
+        .filter(prospect => prospect.distance <= radiusKm)
+        .sort((a, b) => a.distance - b.distance);
+
+      res.json({ data: nearbyProspects });
+    } catch (error) {
+      console.error('Error finding nearby prospects:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   },

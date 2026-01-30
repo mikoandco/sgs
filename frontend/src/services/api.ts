@@ -586,6 +586,88 @@ class ApiService {
   getSMSTemplates() {
     return this.request<{ templates: Array<{ id: string; name: string; description: string }> }>('GET', '/sms/templates');
   }
+
+  // Geocoding
+  geocodeProspect(prospectId: string) {
+    return this.request<{
+      data: {
+        lat: number;
+        lng: number;
+        formattedAddress: string;
+        confidence: number;
+      };
+    }>('POST', `/prospects/${prospectId}/geocode`);
+  }
+
+  batchGeocodeProspects(prospectIds: string[]) {
+    return this.request<{
+      total: number;
+      success: number;
+      failed: number;
+      errors: string[];
+    }>('POST', '/prospects/geocode-batch', { prospectIds });
+  }
+
+  getNearbyProspects(lat: number, lng: number, radiusKm: number = 50) {
+    return this.request<{
+      data: Array<{
+        id: string;
+        companyName: string;
+        address: string;
+        city: string;
+        lat: number;
+        lng: number;
+        distance: number;
+        status: string;
+      }>;
+    }>('GET', '/prospects/nearby', undefined, {
+      lat: lat.toString(),
+      lng: lng.toString(),
+      radius: radiusKm.toString(),
+    });
+  }
+
+  // PDF Export
+  async downloadQuotePdfPro(quoteId: string) {
+    const token = this.getToken();
+    const response = await fetch(`${API_BASE}/exports/quote/${quoteId}/pdf`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate PDF');
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+
+    // Try to get filename from Content-Disposition header
+    const contentDisposition = response.headers.get('Content-Disposition');
+    const filenameMatch = contentDisposition?.match(/filename="?([^"]+)"?/);
+    a.download = filenameMatch ? filenameMatch[1] : `devis_${quoteId}.pdf`;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+
+  async previewQuotePdf(quoteId: string) {
+    const token = this.getToken();
+    const response = await fetch(`${API_BASE}/exports/quote/${quoteId}/pdf`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate PDF');
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  }
 }
 
 export const api = new ApiService();

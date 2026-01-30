@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authenticate, authorize } from '../middleware/auth';
 import { AuthRequest } from '../types';
 import PDFDocument from 'pdfkit';
+import { generateQuotePDF } from '../services/pdfGenerator';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -258,7 +259,7 @@ router.get('/payments', authorize('DIRECTION', 'ADMIN'), async (req: AuthRequest
 });
 
 // ---------------------------------------------------------------------------
-// GET /quote/:id/pdf - Generate quote PDF
+// GET /quote/:id/pdf - Generate quote PDF (Professional Template)
 // ---------------------------------------------------------------------------
 router.get('/quote/:id/pdf', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -282,110 +283,56 @@ router.get('/quote/:id/pdf', async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    // Create PDF
-    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    // Transform data for the PDF generator
+    const pdfData = {
+      id: quote.id,
+      reference: quote.quoteNumber,
+      createdAt: quote.createdAt,
+      validUntil: quote.validUntil,
+      prospect: {
+        companyName: quote.prospect.companyName,
+        siret: quote.prospect.siret || undefined,
+        address: quote.prospect.address,
+        postalCode: quote.prospect.postalCode,
+        city: quote.prospect.city,
+        decisionMakerName: quote.prospect.decisionMakerName,
+        decisionMakerEmail: quote.prospect.decisionMakerEmail || undefined,
+        decisionMakerMobile: quote.prospect.decisionMakerMobile,
+      },
+      commercial: {
+        firstName: quote.commercial.firstName,
+        lastName: quote.commercial.lastName,
+        email: quote.commercial.email || undefined,
+        phone: quote.commercial.phone || undefined,
+      },
+      lines: quote.lines.map(line => ({
+        productName: line.designation,
+        description: line.product?.description || undefined,
+        quantity: line.quantity,
+        unitPriceHT: line.unitPriceHT,
+        tvaRate: line.tvaRate || 20,
+      })),
+      upsells: quote.upsells?.map(upsell => ({
+        name: upsell.name,
+        priceHT: upsell.priceHT,
+        isMonthly: upsell.isMonthly,
+      })),
+      totalHT: quote.totalHT,
+      totalTVA: quote.totalTVA,
+      totalTTC: quote.totalTTC,
+      monthlyFee: quote.monthlyPayment || undefined,
+      paymentMode: quote.paymentMode || undefined,
+      notes: quote.notes || undefined,
+      signedAt: quote.signedAt || undefined,
+    };
+
+    // Generate professional PDF
+    const pdfBuffer = await generateQuotePDF(pdfData);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${quote.quoteNumber}.pdf"`);
-
-    doc.pipe(res);
-
-    // Header
-    doc.fontSize(24).fillColor('#2563eb').text('SOLUTION GS', 50, 50);
-    doc.fontSize(10).fillColor('#666').text('Sécurité & Affichage Dynamique', 50, 80);
-
-    // Quote info
-    doc.fontSize(18).fillColor('#000').text(`DEVIS ${quote.quoteNumber}`, 350, 50);
-    doc.fontSize(10).fillColor('#666');
-    doc.text(`Date: ${new Date(quote.createdAt).toLocaleDateString('fr-FR')}`, 350, 75);
-    doc.text(`Valide jusqu'au: ${new Date(quote.validUntil).toLocaleDateString('fr-FR')}`, 350, 90);
-
-    // Client info
-    doc.moveDown(3);
-    doc.fontSize(12).fillColor('#000').text('CLIENT', 50, 130);
-    doc.fontSize(10).fillColor('#333');
-    doc.text(quote.prospect.companyName, 50, 150);
-    doc.text(quote.prospect.decisionMakerName, 50, 165);
-    doc.text(quote.prospect.address, 50, 180);
-    doc.text(`${quote.prospect.postalCode} ${quote.prospect.city}`, 50, 195);
-    if (quote.prospect.phone) doc.text(`Tél: ${quote.prospect.phone}`, 50, 210);
-
-    // Table header
-    const tableTop = 260;
-    doc.fillColor('#2563eb').rect(50, tableTop, 495, 25).fill();
-    doc.fillColor('#fff').fontSize(10);
-    doc.text('Désignation', 55, tableTop + 7);
-    doc.text('Qté', 320, tableTop + 7);
-    doc.text('Prix unit. HT', 360, tableTop + 7);
-    doc.text('Total HT', 470, tableTop + 7);
-
-    // Table rows
-    let y = tableTop + 30;
-    doc.fillColor('#333');
-
-    for (const line of quote.lines) {
-      if (y > 700) {
-        doc.addPage();
-        y = 50;
-      }
-
-      // Alternate row background
-      if (quote.lines.indexOf(line) % 2 === 0) {
-        doc.fillColor('#f9fafb').rect(50, y - 5, 495, 20).fill();
-      }
-
-      doc.fillColor('#333');
-      doc.text(line.designation.substring(0, 40), 55, y, { width: 260 });
-      doc.text(line.quantity.toString(), 320, y);
-      doc.text(`${line.unitPriceHT.toFixed(2)} €`, 360, y);
-      doc.text(`${line.totalHT.toFixed(2)} €`, 470, y);
-
-      y += 20;
-    }
-
-    // Totals
-    y += 20;
-    doc.moveTo(350, y).lineTo(545, y).stroke();
-
-    y += 10;
-    if (quote.discountAmount && quote.discountAmount > 0) {
-      doc.text('Remise:', 350, y);
-      doc.text(`-${quote.discountAmount.toFixed(2)} €`, 470, y);
-      y += 20;
-    }
-
-    doc.text('Total HT:', 350, y);
-    doc.text(`${quote.totalHT.toFixed(2)} €`, 470, y);
-    y += 20;
-
-    doc.text('TVA (20%):', 350, y);
-    doc.text(`${quote.totalTVA.toFixed(2)} €`, 470, y);
-    y += 20;
-
-    doc.fontSize(12).fillColor('#2563eb');
-    doc.text('Total TTC:', 350, y);
-    doc.text(`${quote.totalTTC.toFixed(2)} €`, 465, y);
-
-    // Payment mode
-    if (quote.paymentMode) {
-      y += 40;
-      doc.fontSize(10).fillColor('#333');
-      doc.text(`Mode de paiement: ${quote.paymentMode === 'CASH' ? 'Comptant' : 'Leasing'}`, 50, y);
-
-      if (quote.paymentMode === 'LEASING' && quote.leasingDuration) {
-        doc.text(`Durée: ${quote.leasingDuration} mois`, 50, y + 15);
-        if (quote.monthlyPayment) {
-          doc.text(`Mensualité: ${quote.monthlyPayment.toFixed(2)} €/mois`, 50, y + 30);
-        }
-      }
-    }
-
-    // Footer
-    doc.fontSize(8).fillColor('#666');
-    doc.text('Solution GS - SIRET: XXX XXX XXX XXXXX', 50, 780);
-    doc.text('contact@solutionsg.fr - www.solutionsg.fr', 50, 792);
-
-    doc.end();
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
   } catch (error) {
     console.error('Error generating PDF:', error);
     res.status(500).json({ error: 'Erreur lors de la génération du PDF' });
