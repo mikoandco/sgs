@@ -569,6 +569,23 @@ class ApiService {
   toggleGoogleSync(enabled: boolean) {
     return this.request('PUT', '/calendar/google/settings', { syncEnabled: enabled });
   }
+
+  // SMS
+  sendSMS(data: { prospectId?: string; phone?: string; message?: string; template?: string; templateData?: Record<string, string> }) {
+    return this.request<{ success: boolean; messageId?: string; error?: string }>('POST', '/sms/send', data);
+  }
+
+  sendBulkSMS(data: { prospectIds: string[]; message?: string; template?: string; templateData?: Record<string, string> }) {
+    return this.request<{ total: number; sent: number; failed: number; errors: string[] }>('POST', '/sms/send-bulk', data);
+  }
+
+  sendAppointmentReminder(appointmentId: string) {
+    return this.request<{ success: boolean; messageId?: string }>('POST', `/sms/reminder/${appointmentId}`);
+  }
+
+  getSMSTemplates() {
+    return this.request<{ templates: Array<{ id: string; name: string; description: string }> }>('GET', '/sms/templates');
+  }
 }
 
 export const api = new ApiService();

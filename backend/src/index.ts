@@ -18,6 +18,7 @@ import exportRoutes from './routes/exports';
 import notificationRoutes from './routes/notifications';
 import commentRoutes from './routes/comments';
 import calendarRoutes from './routes/calendar';
+import smsRoutes from './routes/sms';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -60,6 +61,7 @@ app.use('/api/exports', exportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/calendar', calendarRoutes);
+app.use('/api/sms', smsRoutes);
 
 app.listen(PORT, () => {
   console.log(`SGS CRM Backend running on port ${PORT}`);
