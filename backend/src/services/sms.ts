@@ -123,7 +123,7 @@ const sendViaOVH = async (to: string, message: string): Promise<SMSResult> => {
       body,
     });
 
-    const result = await response.json();
+    const result = await response.json() as { ids?: number[]; message?: string };
 
     if (result.ids && result.ids.length > 0) {
       return {

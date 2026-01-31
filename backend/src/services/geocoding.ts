@@ -53,7 +53,7 @@ export const geocodeAddress = async (
       };
     }
 
-    const data: DataGouvResponse = await response.json();
+    const data = await response.json() as DataGouvResponse;
 
     if (!data.features || data.features.length === 0) {
       return {
@@ -120,7 +120,7 @@ export const reverseGeocode = async (
       };
     }
 
-    const data: DataGouvResponse = await response.json();
+    const data = await response.json() as DataGouvResponse;
 
     if (!data.features || data.features.length === 0) {
       return {

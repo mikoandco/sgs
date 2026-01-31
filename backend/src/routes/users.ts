@@ -1,8 +1,9 @@
 import { Router, Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
-import { PrismaClient, UserRole } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { authenticate, authorize } from '../middleware/auth';
+import { UserRole } from '../types/enums';
 import { AuthRequest } from '../types';
 
 const prisma = new PrismaClient();

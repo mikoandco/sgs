@@ -54,7 +54,7 @@ router.post('/send', authenticate, async (req: AuthRequest, res: Response) => {
           prospectId,
           userId: req.userId!,
           type: 'SMS',
-          description: `SMS envoyé: ${finalMessage.slice(0, 50)}...`,
+          content: `SMS envoyé: ${finalMessage.slice(0, 50)}...`,
         },
       });
     }
@@ -77,7 +77,7 @@ router.post('/send', authenticate, async (req: AuthRequest, res: Response) => {
 });
 
 // Send bulk SMS
-router.post('/send-bulk', authenticate, authorize(['ADMIN', 'DIRECTION']), async (req: AuthRequest, res: Response) => {
+router.post('/send-bulk', authenticate, authorize('ADMIN', 'DIRECTION'), async (req: AuthRequest, res: Response) => {
   try {
     const { prospectIds, message, template, templateData } = req.body;
 
@@ -125,7 +125,7 @@ router.post('/send-bulk', authenticate, authorize(['ADMIN', 'DIRECTION']), async
             prospectId: prospect.id,
             userId: req.userId!,
             type: 'SMS',
-            description: `SMS envoyé: ${finalMessage.slice(0, 50)}...`,
+            content: `SMS envoyé: ${finalMessage.slice(0, 50)}...`,
           },
         });
       } else {
@@ -192,7 +192,7 @@ router.post('/reminder/:appointmentId', authenticate, async (req: AuthRequest, r
           prospectId: appointment.prospectId,
           userId: req.userId!,
           type: 'SMS',
-          description: 'Rappel de RDV envoyé par SMS',
+          content: 'Rappel de RDV envoyé par SMS',
         },
       });
 

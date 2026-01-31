@@ -1,7 +1,8 @@
 import { Router, Response } from 'express';
-import { PrismaClient, AppointmentStatus, DayOfWeek, ProspectStatus } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { authenticate, authorize } from '../middleware/auth';
 import { AuthRequest } from '../types';
+import { AppointmentStatus, DayOfWeek, ProspectStatus } from '../types/enums';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -203,8 +204,8 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
           },
         });
 
-        const suggestedDays = correctAssignments.map((a) => a.dayOfWeek);
-        const suggestedLabels = suggestedDays.map((d) => DAY_LABELS[d] || d);
+        const suggestedDays = correctAssignments.map((a: { dayOfWeek: string }) => a.dayOfWeek);
+        const suggestedLabels = suggestedDays.map((d: string) => DAY_LABELS[d] || d);
 
         res.status(400).json({
           error: suggestedDays.length > 0

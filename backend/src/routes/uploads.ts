@@ -144,7 +144,13 @@ router.post('/multiple', upload.array('files', 10), async (req: AuthRequest, res
     const { prospectId, type } = req.body;
     const category = (req.query.category as string) || 'documents';
 
-    const results = [];
+    const results: Array<{
+      document?: unknown;
+      url: string;
+      filename: string;
+      originalName: string;
+      size: number;
+    }> = [];
 
     for (const file of files) {
       const fileUrl = `/uploads/${category}/${file.filename}`;

@@ -1,0 +1,142 @@
+// Prisma Enums - Defined locally for TypeScript compilation
+// These match the enums in prisma/schema.prisma
+
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  DIRECTION = 'DIRECTION',
+  COMMERCIAL = 'COMMERCIAL',
+  SDR = 'SDR',
+}
+
+export enum ProspectStatus {
+  NEW = 'NEW',
+  QUALIFYING = 'QUALIFYING',
+  QUALIFIED = 'QUALIFIED',
+  APPOINTMENT_SCHEDULED = 'APPOINTMENT_SCHEDULED',
+  APPOINTMENT_DONE = 'APPOINTMENT_DONE',
+  QUOTE_SENT = 'QUOTE_SENT',
+  SIGNED = 'SIGNED',
+  INSTALLATION_PENDING = 'INSTALLATION_PENDING',
+  INSTALLED = 'INSTALLED',
+  LOST = 'LOST',
+}
+
+export enum ProspectNeed {
+  SECURITY = 'SECURITY',
+  DISPLAY = 'DISPLAY',
+  MIXED = 'MIXED',
+}
+
+export enum AppointmentStatus {
+  SCHEDULED = 'SCHEDULED',
+  CONFIRMED = 'CONFIRMED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+  NO_SHOW = 'NO_SHOW',
+  RESCHEDULED = 'RESCHEDULED',
+}
+
+export enum DayOfWeek {
+  MONDAY = 'MONDAY',
+  TUESDAY = 'TUESDAY',
+  WEDNESDAY = 'WEDNESDAY',
+  THURSDAY = 'THURSDAY',
+  FRIDAY = 'FRIDAY',
+  SATURDAY = 'SATURDAY',
+  SUNDAY = 'SUNDAY',
+}
+
+export enum ProductFamily {
+  SECURITY = 'SECURITY',
+  MAINTENANCE = 'MAINTENANCE',
+  DISPLAY = 'DISPLAY',
+  WORKS = 'WORKS',
+}
+
+export enum QuoteStatus {
+  DRAFT = 'DRAFT',
+  SENT = 'SENT',
+  SIGNED = 'SIGNED',
+  VALIDATED = 'VALIDATED',
+  REFUSED = 'REFUSED',
+  EXPIRED = 'EXPIRED',
+}
+
+export enum PaymentMode {
+  CASH = 'CASH',
+  LEASING = 'LEASING',
+}
+
+export enum LeasingOrganism {
+  GRENKE = 'GRENKE',
+  LOCAM = 'LOCAM',
+  OTHER = 'OTHER',
+}
+
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  RECEIVED = 'RECEIVED',
+  VALIDATED = 'VALIDATED',
+  REJECTED = 'REJECTED',
+}
+
+export enum ValidationStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REFUSED = 'REFUSED',
+  INFO_REQUESTED = 'INFO_REQUESTED',
+}
+
+export enum CommissionStatus {
+  PENDING = 'PENDING',
+  PARTIAL = 'PARTIAL',
+  PAID = 'PAID',
+}
+
+export enum AlertPriority {
+  HIGH = 'HIGH',
+  MEDIUM = 'MEDIUM',
+  LOW = 'LOW',
+}
+
+export enum AlertStatus {
+  PENDING = 'PENDING',
+  IN_PROGRESS = 'IN_PROGRESS',
+  DONE = 'DONE',
+  POSTPONED = 'POSTPONED',
+  ESCALATED = 'ESCALATED',
+}
+
+export enum QuestionType {
+  YES_NO = 'YES_NO',
+  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  TEXT = 'TEXT',
+  NUMBER = 'NUMBER',
+  SCALE = 'SCALE',
+}
+
+export enum QuestionCategory {
+  SECURITY = 'SECURITY',
+  DISPLAY = 'DISPLAY',
+}
+
+export enum TimelineEntryType {
+  CALL = 'CALL',
+  EMAIL = 'EMAIL',
+  SMS = 'SMS',
+  NOTE = 'NOTE',
+  COMMENT = 'COMMENT',
+  APPOINTMENT_SCHEDULED = 'APPOINTMENT_SCHEDULED',
+  APPOINTMENT_RESCHEDULED = 'APPOINTMENT_RESCHEDULED',
+  APPOINTMENT_COMPLETED = 'APPOINTMENT_COMPLETED',
+  APPOINTMENT_CANCELLED = 'APPOINTMENT_CANCELLED',
+  QUOTE_CREATED = 'QUOTE_CREATED',
+  QUOTE_SENT = 'QUOTE_SENT',
+  QUOTE_SIGNED = 'QUOTE_SIGNED',
+  STATUS_CHANGE = 'STATUS_CHANGE',
+  ALERT_CREATED = 'ALERT_CREATED',
+  RELANCE = 'RELANCE',
+  DOCUMENT_ADDED = 'DOCUMENT_ADDED',
+  REFERRAL = 'REFERRAL',
+}
