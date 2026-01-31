@@ -1,7 +1,8 @@
 import { Router, Response } from 'express';
-import { PrismaClient, ProductFamily } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { authenticate, authorize } from '../middleware/auth';
 import { AuthRequest } from '../types';
+import { ProductFamily } from '../types/enums';
 
 const prisma = new PrismaClient();
 const router = Router();
