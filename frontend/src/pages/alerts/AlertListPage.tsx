@@ -29,7 +29,7 @@ export default function AlertListPage() {
       if (statusFilter) params.status = statusFilter;
       if (priorityFilter) params.priority = priorityFilter;
       const res = await api.getAlerts(params);
-      setAlerts(res.data || []);
+      if (Array.isArray(res.data)) setAlerts(res.data);
     } catch (err) {
       console.error('Error loading alerts:', err);
     } finally {
@@ -39,7 +39,7 @@ export default function AlertListPage() {
 
   const handleStatusChange = async (alertId: string, newStatus: string) => {
     try {
-      await api.updateAlert(alertId, { status: newStatus });
+      await api.updateAlert(alertId, { status: newStatus as 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'POSTPONED' | 'ESCALATED' });
       loadAlerts();
     } catch (err) {
       console.error('Error updating alert:', err);

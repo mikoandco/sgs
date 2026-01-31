@@ -48,8 +48,13 @@ export default function CalendarPage() {
         }),
         api.getUsers({ role: 'COMMERCIAL' }),
       ]);
-      setAppointments(aptsRes.data || []);
-      setCommercials(usersRes.data || []);
+      if (Array.isArray(aptsRes.data)) setAppointments(aptsRes.data);
+      const usersData = usersRes.data as { users?: User[] } | User[];
+      if (Array.isArray(usersData)) {
+        setCommercials(usersData);
+      } else if (usersData?.users) {
+        setCommercials(usersData.users);
+      }
     } catch (err) {
       console.error('Error loading calendar:', err);
     } finally {
@@ -61,7 +66,7 @@ export default function CalendarPage() {
     if (q.length < 2) return;
     try {
       const res = await api.getProspects({ search: q });
-      setProspects(res.data || []);
+      if (Array.isArray(res.data)) setProspects(res.data);
     } catch (err) {
       console.error(err);
     }

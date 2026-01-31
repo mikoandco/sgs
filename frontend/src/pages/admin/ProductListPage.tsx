@@ -23,16 +23,17 @@ export default function ProductListPage() {
     try {
       setLoading(true);
       const [productsRes, kitsRes] = await Promise.all([api.getProducts(), api.getKits()]);
-      setProducts(productsRes.data || []);
-      setKits(kitsRes.data || []);
+      if (Array.isArray(productsRes.data)) setProducts(productsRes.data);
+      if (Array.isArray(kitsRes.data)) setKits(kitsRes.data);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
 
   const handleSave = async () => {
     try {
-      if (editingProduct) await api.updateProduct(editingProduct.id, formData);
-      else await api.createProduct(formData);
+      const dataToSave = { ...formData } as unknown as Partial<Product>;
+      if (editingProduct) await api.updateProduct(editingProduct.id, dataToSave);
+      else await api.createProduct(dataToSave);
       setShowModal(false); setEditingProduct(null); resetForm(); loadData();
     } catch (err) { console.error(err); }
   };

@@ -26,15 +26,25 @@ export default function ZoneConfigPage() {
     try {
       setLoading(true);
       const [zonesRes, usersRes] = await Promise.all([api.getAdminZones(), api.getUsers({ role: 'COMMERCIAL' })]);
-      setZones(zonesRes.data || []);
-      setCommercials(usersRes.data || []);
+
+      const zonesData = Array.isArray(zonesRes.data) ? zonesRes.data : [];
+      setZones(zonesData);
+
+      const usersData = usersRes.data as { users?: User[] } | User[];
+      if (Array.isArray(usersData)) {
+        setCommercials(usersData);
+      } else if (usersData?.users) {
+        setCommercials(usersData.users);
+      }
 
       // Build assignments map from zone data
       const assignmentMap: Record<string, Record<string, string>> = {};
-      (zonesRes.data || []).forEach((zone: Zone & { assignments?: Array<{ user: { id: string }; dayOfWeek: string }> }) => {
+      zonesData.forEach((zone: Zone & { assignments?: Array<{ user?: { id: string }; dayOfWeek: string }> }) => {
         zone.assignments?.forEach(a => {
-          if (!assignmentMap[a.user.id]) assignmentMap[a.user.id] = {};
-          assignmentMap[a.user.id][a.dayOfWeek] = zone.id;
+          if (a.user?.id) {
+            if (!assignmentMap[a.user.id]) assignmentMap[a.user.id] = {};
+            assignmentMap[a.user.id][a.dayOfWeek] = zone.id;
+          }
         });
       });
       setAssignments(assignmentMap);

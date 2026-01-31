@@ -52,7 +52,12 @@ export default function UserListPage() {
     try {
       setLoading(true);
       const response = await api.getUsers();
-      setUsers(response.data);
+      const data = response.data as { users?: User[] } | User[];
+      if (Array.isArray(data)) {
+        setUsers(data);
+      } else if (data?.users) {
+        setUsers(data.users);
+      }
     } catch (error) {
       console.error('Erreur lors du chargement des utilisateurs:', error);
     } finally {

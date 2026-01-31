@@ -52,9 +52,9 @@ export default function QuoteEditorPage() {
       if (id) {
         const quoteRes = await api.getQuote(id);
         const quote = quoteRes.data;
-        setProspect(quote.prospect);
-        setLines(quote.lines?.map((l: { product: Product; quantity: number; unitPriceHT: number; totalHT: number }) => ({
-          productId: l.product.id, name: l.product.name, quantity: l.quantity, unitPriceHT: l.unitPriceHT, totalHT: l.totalHT
+        if (quote.prospect) setProspect(quote.prospect);
+        setLines(quote.lines?.map((l: any) => ({
+          productId: l.product?.id || l.productId, name: l.product?.name || l.designation, quantity: l.quantity, unitPriceHT: l.unitPriceHT, totalHT: l.totalHT
         })) || []);
         setDiscount(quote.discountPercent || 0);
         setPaymentMode(quote.paymentMode || 'CASH');
@@ -77,7 +77,7 @@ export default function QuoteEditorPage() {
   };
 
   const applyKit = (kit: Kit) => {
-    const newLines = kit.items?.map((item: { product: Product; quantity: number }) => ({
+    const newLines = kit.items?.filter((item: any) => item.product).map((item: any) => ({
       productId: item.product.id, name: item.product.name, quantity: item.quantity, unitPriceHT: item.product.unitPriceHT, totalHT: item.quantity * item.product.unitPriceHT
     })) || [];
     setLines([...lines, ...newLines]);
@@ -109,18 +109,22 @@ export default function QuoteEditorPage() {
   const handleSave = async (asDraft = true) => {
     setSaving(true);
     try {
-      const data = {
+      const data: any = {
         prospectId: prospect?.id,
         lines: lines.map(l => ({ productId: l.productId, quantity: l.quantity, unitPriceHT: l.unitPriceHT })),
         discountPercent: discount,
         paymentMode,
         isTabacSubvention,
-        ...(paymentMode === 'LEASING' && { leasingOrganism, leasingDuration }),
       };
+      if (paymentMode === 'LEASING') {
+        data.leasingOrganism = leasingOrganism;
+        data.leasingDuration = leasingDuration;
+      }
       if (id) {
         await api.updateQuote(id, data);
       } else {
-        const res = await api.createQuote(data);
+        if (!prospect?.id) throw new Error('Prospect required');
+        const res = await api.createQuote({ ...data, prospectId: prospect.id });
         navigate(`/quotes/${res.data.id}`);
         return;
       }

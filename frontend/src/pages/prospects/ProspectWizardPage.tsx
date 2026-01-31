@@ -103,7 +103,12 @@ export default function ProspectWizardPage() {
     setSubmitting(true);
     setError('');
     try {
-      const prospectRes = await api.createProspect({ ...formData, status: 'QUALIFYING' });
+      const prospectData = {
+        ...formData,
+        status: 'QUALIFYING' as const,
+        need: formData.need || undefined
+      };
+      const prospectRes = await api.createProspect(prospectData);
       const prospectId = prospectRes.data.id;
 
       const answersList = Object.entries(answers).map(([questionId, answer]) => ({ questionId, answer }));

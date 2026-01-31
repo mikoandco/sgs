@@ -73,7 +73,12 @@ export default function QuoteListPage() {
   // Fetch commercials on mount
   useEffect(() => {
     api.getUsers({ role: 'COMMERCIAL' }).then((res) => {
-      setCommercials(res.data);
+      const data = res.data as { users?: User[] } | User[];
+      if (Array.isArray(data)) {
+        setCommercials(data);
+      } else if (data?.users) {
+        setCommercials(data.users);
+      }
     }).catch(() => {});
   }, []);
 

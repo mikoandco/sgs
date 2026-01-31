@@ -37,8 +37,13 @@ export default function CommissionListPage() {
         api.getCommissions(params),
         canManage ? api.getUsers({ role: 'COMMERCIAL' }) : Promise.resolve({ data: [] }),
       ]);
-      setCommissions(commissionsRes.data || []);
-      setCommercials(usersRes.data || []);
+      if (Array.isArray(commissionsRes.data)) setCommissions(commissionsRes.data);
+      const usersData = usersRes.data as { users?: User[] } | User[] | undefined;
+      if (Array.isArray(usersData)) {
+        setCommercials(usersData);
+      } else if (usersData?.users) {
+        setCommercials(usersData.users);
+      }
     } catch (err) {
       console.error('Error loading commissions:', err);
     } finally {

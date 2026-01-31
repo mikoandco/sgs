@@ -34,7 +34,9 @@ export const GoogleCalendarSync: React.FC = () => {
     try {
       setLoading(true);
       const response = await api.getGoogleCalendarStatus();
-      setStatus(response as GoogleCalendarStatus);
+      if (response?.data) {
+        setStatus(response.data);
+      }
       setError(null);
     } catch (err) {
       setError('Impossible de charger le statut de synchronisation');
@@ -69,8 +71,9 @@ export const GoogleCalendarSync: React.FC = () => {
       setConnecting(true);
       setError(null);
       const response = await api.getGoogleConnectUrl();
-      const data = response as { url: string };
-      window.location.href = data.url;
+      if (response?.data?.url) {
+        window.location.href = response.data.url;
+      }
     } catch (err) {
       setError('Erreur lors de la connexion à Google Calendar');
       setConnecting(false);
@@ -99,9 +102,8 @@ export const GoogleCalendarSync: React.FC = () => {
       setSyncing(true);
       setError(null);
       const response = await api.syncGoogleCalendar();
-      const data = response as { success: boolean; syncedEvents?: number };
-      if (data.success) {
-        setSuccess(`Synchronisation terminée (${data.syncedEvents || 0} événements)`);
+      if (response?.data?.success) {
+        setSuccess(`Synchronisation terminée (${response.data.syncedEvents || 0} événements)`);
         setTimeout(() => setSuccess(null), 3000);
         fetchStatus();
       }

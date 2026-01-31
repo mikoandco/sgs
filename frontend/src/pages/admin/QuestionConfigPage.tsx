@@ -20,14 +20,14 @@ export default function QuestionConfigPage() {
     try {
       setLoading(true);
       const res = await api.getQuestions({ category: tab });
-      setQuestions(res.data || []);
+      if (Array.isArray(res.data)) setQuestions(res.data);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
 
   const handleSave = async () => {
     try {
-      const data = { ...formData, displayCondition: formData.displayCondition || undefined, parentId: formData.parentId || undefined, options: formData.options || undefined };
+      const data = { ...formData, displayCondition: formData.displayCondition || undefined, parentId: formData.parentId || undefined, options: formData.options || undefined } as unknown as Partial<QualificationQuestion>;
       if (editingQuestion) await api.updateQuestion(editingQuestion.id, data);
       else await api.createQuestion(data);
       setShowModal(false); setEditingQuestion(null); resetForm(); loadQuestions();

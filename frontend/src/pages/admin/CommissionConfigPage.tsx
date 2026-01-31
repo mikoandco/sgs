@@ -42,8 +42,8 @@ export default function CommissionConfigPage() {
     try {
       setLoading(true);
       const [rulesRes, configRes] = await Promise.all([api.getCommissionRules(), api.getReferralConfig()]);
-      setRules(rulesRes.data || []);
-      if (configRes.data) setReferralConfig(configRes.data);
+      if (Array.isArray(rulesRes.data)) setRules(rulesRes.data);
+      if (configRes.data && typeof configRes.data === 'object') setReferralConfig(configRes.data as ReferralConfig);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
@@ -59,7 +59,7 @@ export default function CommissionConfigPage() {
   const handleSaveReferral = async () => {
     try {
       setSavingReferral(true);
-      await api.updateReferralConfig(referralConfig);
+      await api.updateReferralConfig(referralConfig as unknown as Record<string, unknown>);
     } catch (err) { console.error(err); }
     finally { setSavingReferral(false); }
   };
